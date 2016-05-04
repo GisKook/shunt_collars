@@ -1,0 +1,13 @@
+{  
+	"ServerConfig":{
+		"ReadLimit":300,
+		"WriteLimit":3000000,
+		"ConnTimeout":5,
+		"ConnCheckInterval":6,
+		"ServerStatistics":10,
+		"BindPort":8887
+	},
+	"UpConnectionConfig":{
+		"DasHost":"111.11.26.209:50028"
+	}
+}
