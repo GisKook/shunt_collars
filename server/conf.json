@@ -5,7 +5,7 @@
 		"ConnTimeout":5,
 		"ConnCheckInterval":6,
 		"ServerStatistics":10,
-		"BindPort":8887
+		"BindPort":8884
 	},
 	"UpConnectionConfig":{
 		"DasHost":"111.11.26.209:50028"
