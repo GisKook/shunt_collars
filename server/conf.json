@@ -1,7 +1,7 @@
 {  
 	"ServerConfig":{
 		"ReadLimit":300,
-		"WriteLimit":3000000,
+		"WriteLimit":300,
 		"ConnTimeout":5,
 		"ConnCheckInterval":6,
 		"ServerStatistics":10,

@@ -162,17 +162,68 @@ func (p *DasPosUpPacket) Serialize() []byte {
 	return []byte(cmd)
 }
 
-func ParsePosUp(buffer []byte) (*DasPosUpPacket, string) {
+type PosUpPacket struct {
+	SerialID uint16
+	Checksum uint8
+	SubCmdID uint8
+}
+
+func (p *PosUpPacket) Serialize() []byte {
+	var buf []byte
+	buf = append(buf, 0x29)
+	buf = append(buf, 0x29)
+	buf = append(buf, 0x22)
+	buf = append(buf, 0x00)
+	buf = append(buf, 0x07)
+	serialid := make([]byte, 2)
+	binary.BigEndian.PutUint16(serialid, p.SerialID)
+	buf = append(buf, serialid...)
+	buf = append(buf, p.Checksum)
+	buf = append(buf, p.SubCmdID)
+	buf = append(buf, CheckSum(buf, uint8(len(buf))))
+	buf = append(buf, 0x0D)
+
+	return buf
+}
+
+func ParsePosUp(buffer []byte) (*DasPosUpPacket, *PosUpPacket, string) {
 	batt := BCD[buffer[40]]
+	checksum := buffer[len(buffer)-2]
 
 	if buffer[32] == 'A' {
 		log.Printf("A %x", buffer[0:len(buffer)])
 		buf := bytes.NewReader(buffer)
 		buf.Seek(5, 0)
-		imei_bytes := make([]byte, 4)
-		buf.Read(imei_bytes)
-		imei := binary.BigEndian.Uint32(imei_bytes)
-		buf.Seek(3, 1)
+		//	imei_bytes := make([]byte, 4)
+		//	buf.Read(imei_bytes)
+		//	imei := binary.BigEndian.Uint32(imei_bytes)
+		termID0, _ := buf.ReadByte()
+		termID1, _ := buf.ReadByte()
+		termID1 -= 0x80
+		termID2, _ := buf.ReadByte()
+		termID2 -= 0x80
+		termID3, _ := buf.ReadByte()
+
+		strTermID0 := fmt.Sprintf("%02d", termID0)
+		strTermID1 := fmt.Sprintf("%02d", termID1)
+		strTermID2 := fmt.Sprintf("%02d", termID2)
+		strTermID3 := fmt.Sprintf("%02d", termID3)
+		log.Println(strTermID0)
+		log.Println(strTermID1)
+		log.Println(strTermID2)
+		log.Println(strTermID3)
+
+		strTermID := strTermID0 + strTermID1 + strTermID2 + strTermID3
+
+		tmp, _ := strconv.Atoi(strTermID)
+		imei := uint32(tmp)
+
+		//	buf.Seek(3, 1)
+		serialid_byte := make([]byte, 2)
+		buf.Read(serialid_byte)
+		serialid := binary.BigEndian.Uint16(serialid_byte)
+		subcmdid, _ := buf.ReadByte()
+
 		year, _ := buf.ReadByte()
 		timepos := BCD[year]
 		month, _ := buf.ReadByte()
@@ -219,19 +270,35 @@ func ParsePosUp(buffer []byte) (*DasPosUpPacket, string) {
 		postype := "0"
 
 		return &DasPosUpPacket{
-			IMEI:      fmt.Sprint(imei),
-			Time:      timepos,
-			Batt:      batt,
-			Speed:     fmt.Sprint(speed),
-			Parse:     parse,
-			PosReason: posreason,
-			Postype:   postype,
-			Longitude: long,
-			Latitude:  lat,
-		}, batt
+				IMEI:      fmt.Sprint(imei),
+				Time:      timepos,
+				Batt:      batt,
+				Speed:     fmt.Sprint(speed),
+				Parse:     parse,
+				PosReason: posreason,
+				Postype:   postype,
+				Longitude: long,
+				Latitude:  lat,
+			}, &PosUpPacket{
+				SerialID: serialid,
+				SubCmdID: subcmdid,
+				Checksum: checksum,
+			}, batt
+	} else {
+		buf := bytes.NewReader(buffer)
+		buf.Seek(9, 0)
+		serialid_byte := make([]byte, 2)
+		buf.Read(serialid_byte)
+		serialid := binary.BigEndian.Uint16(serialid_byte)
+		subcmdid, _ := buf.ReadByte()
 
+		return nil, &PosUpPacket{
+			SerialID: serialid,
+			SubCmdID: subcmdid,
+			Checksum: checksum,
+		}, batt
 	}
 
-	return nil, batt
+	return nil, nil, batt
 
 }

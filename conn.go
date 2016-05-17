@@ -195,6 +195,8 @@ func (c *Conn) recvdas() {
 				c.ReadMoreDas = true
 			case HalfPack:
 				c.ReadMoreDas = true
+			case UnSupport:
+				c.ReadMoreDas = false
 			}
 		} else {
 			return

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	//	"errors"
+	"log"
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 
 //main protocol format 0x29 0x29 protocolid(byte) len(word) terminalid(dwords) content(nbytes) checksum(byte) endflag
 func CheckProtocol(buffer *bytes.Buffer) (uint16, uint16) {
+	log.Printf("%x\n", buffer.Bytes())
 	bufferlen := buffer.Len()
 	if bufferlen == 0 {
 		return Illegal, 0
@@ -53,8 +55,12 @@ func CheckProtocol(buffer *bytes.Buffer) (uint16, uint16) {
 func parseDasCmdID(buf *bytes.Buffer) uint16 {
 	split := bytes.Split(buf.Bytes(), Colon)
 
-	return protocolIDDas[string(split[0])]
-
+	cmdid, ok := protocolIDDas[string(split[0])]
+	if ok {
+		return cmdid
+	} else {
+		return UnSupport
+	}
 }
 
 func CheckProtocolDas(buffer *bytes.Buffer) (uint16, uint16) {

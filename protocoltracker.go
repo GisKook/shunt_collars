@@ -29,6 +29,8 @@ func (this *TrackerPacket) Serialize() []byte {
 		return this.Packet.(*protocol.LoginPacket).Serialize()
 	case HeartBeat:
 		return this.Packet.(*protocol.HeartPacket).Serialize()
+	case PosUp:
+		return this.Packet.(*protocol.PosUpPacket).Serialize()
 	}
 
 	return nil
@@ -89,13 +91,15 @@ func (this *TrackerProtocol) ReadPacket(c *gotcp.Conn) (gotcp.Packet, error) {
 			log.Printf("<OUT>     %x", pkg.Serialize())
 			return NewTrackerPacket(HeartBeat, pkg), nil
 		case PosUp:
-			daspkg, batt := protocol.ParsePosUp(pkgbyte)
+			daspkg, pkg, batt := protocol.ParsePosUp(pkgbyte)
 			if daspkg != nil {
 				smconn.WriteToDas(daspkg)
 				log.Println("<OUT DAS> " + string(daspkg.Serialize()))
 			}
 			smconn.Batt = batt
 			smconn.ReadMore = false
+
+			return NewTrackerPacket(PosUp, pkg), nil
 		case Illegal:
 			smconn.ReadMore = true
 		case HalfPack:
