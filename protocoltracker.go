@@ -92,6 +92,7 @@ func (this *TrackerProtocol) ReadPacket(c *gotcp.Conn) (gotcp.Packet, error) {
 			return NewTrackerPacket(HeartBeat, pkg), nil
 		case PosUp:
 			daspkg, pkg, batt := protocol.ParsePosUp(pkgbyte)
+			log.Println("<DEBUG  > " + batt)
 			if daspkg != nil {
 				smconn.WriteToDas(daspkg)
 				log.Println("<OUT DAS> " + string(daspkg.Serialize()))
